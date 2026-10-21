@@ -60,8 +60,24 @@ app.MapGet("/api/products/{id}", async (int id, AppDbContext db) =>
     return Results.Ok(response);
 });
 
+app.MapDelete("/api/products/{id}", async (int id, AppDbContext db) =>
+{
+    var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id);
+    if (product == null)
+    {
+        return Results.NotFound();
+    }
+    db.Products.Remove(product);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
 app.MapPost("/api/products", async (AppDbContext db, CreateProductDto dto) =>
 {
+    if (string.IsNullOrWhiteSpace(dto.Name) || dto.Price <= 0 || string.IsNullOrWhiteSpace(dto.Description) || string.IsNullOrWhiteSpace(dto.Image))
+    {
+        return Results.BadRequest();
+    }
     var product = new Product
     {
         Name = dto.Name,
@@ -70,6 +86,7 @@ app.MapPost("/api/products", async (AppDbContext db, CreateProductDto dto) =>
         Image = dto.Image,
         UrlSlug = dto.Name.Trim().ToLowerInvariant().Replace(" ", "-")
     };
+
 
     db.Products.Add(product);
     await db.SaveChangesAsync();
