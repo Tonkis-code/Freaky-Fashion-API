@@ -1,3 +1,4 @@
+
 # Freaky Fashion API
 
 A RESTful e-commerce backend built using **C#, ASP.NET Core Minimal API, Entity Framework Core, and SQL Server**.
@@ -10,11 +11,11 @@ The purpose of this project is to strengthen my backend development skills throu
 
 🚧 **Work in Progress**
 
-Freaky Fashion is currently under active development.
+All required product and category endpoints for the assignment have been implemented.
 
-The API supports creating products, retrieving all products, retrieving individual products by ID, and filtering products by URL slug. Product data is stored persistently in SQL Server LocalDB using Entity Framework Core.
+The API supports creating, retrieving, filtering, and deleting products and categories. Data is stored persistently in SQL Server LocalDB using Entity Framework Core.
 
-Category endpoints, product deletion, and additional validation are still under development.
+The remaining work includes reviewing the implementation against the assignment requirements, verifying product-category relationships, and completing final testing and documentation.
 
 ## Tech Stack
 
@@ -30,26 +31,41 @@ Category endpoints, product deletion, and additional validation are still under 
 
 ### Currently Implemented
 
+**Products**
 - Creating products through a REST API
 - Retrieving all products
 - Retrieving individual products by ID
 - Filtering products by URL slug
-- Automatic URL slug generation when creating products
-- Database persistence using Entity Framework Core
-- Data Transfer Objects (DTOs) for product requests and responses
-- Asynchronous database operations
-- HTTP status codes including `200 OK`, `201 Created`, and `404 Not Found`
-
-### Planned Features
-
-- Deleting products
+- Deleting products by ID
+- Automatic URL slug generation
 - Input validation for product creation
-- Creating, retrieving, and deleting categories
-- Retrieving categories and their associated products
-- Category lookup by ID or URL slug
-- Automatic URL slug generation for categories
+- Product request and response DTOs
+
+**Categories**
+- Creating categories through a REST API
+- Retrieving all categories
+- Retrieving individual categories by ID
+- Filtering categories by URL slug
+- Deleting categories by ID
+- Automatic URL slug generation
+- Input validation for category creation
 - Category request and response DTOs
-- Additional API testing and documentation
+- Returning category data with a nested products collection
+
+**General**
+- Database persistence using Entity Framework Core
+- SQL Server LocalDB integration
+- Entity relationships between categories and products
+- Asynchronous database operations
+- Dependency injection
+- HTTP status codes including `200 OK`, `201 Created`, `204 No Content`, `400 Bad Request`, and `404 Not Found`
+
+### Remaining Work
+
+- Verify product-category relationships with associated product data
+- Review all functionality against the assignment requirements
+- Complete final API testing
+- Finalize documentation
 
 ### Development Progress
 
@@ -57,20 +73,29 @@ Category endpoints, product deletion, and additional validation are still under 
 - [x] Product and Category database models
 - [x] Entity Framework Core configuration
 - [x] SQL Server LocalDB integration
-- [x] Initial database migration
+- [x] Database migrations
 - [x] Product creation DTO
 - [x] Product response DTO
+- [x] Category creation DTO
+- [x] Category response DTO
 - [x] GET endpoint for retrieving all products
 - [x] GET endpoint for retrieving a product by ID
 - [x] GET endpoint for filtering products by slug
 - [x] POST endpoint for creating products
+- [x] DELETE endpoint for deleting products
 - [x] Automatic product URL slug generation
-- [x] Manual testing of product endpoints using Bruno
-- [ ] Product input validation
-- [ ] Product deletion
-- [ ] Category DTOs
-- [ ] Category endpoints
-- [ ] Category and product relationship handling in API responses
+- [x] Product input validation
+- [x] GET endpoint for retrieving all categories
+- [x] GET endpoint for retrieving a category by ID
+- [x] GET endpoint for filtering categories by slug
+- [x] POST endpoint for creating categories
+- [x] DELETE endpoint for deleting categories
+- [x] Automatic category URL slug generation
+- [x] Category input validation
+- [x] Nested product DTO mapping in category responses
+- [x] Manual endpoint testing using Bruno
+- [ ] Verify category responses with associated products
+- [ ] Final requirements review
 - [ ] Final API testing and documentation
 
 ## API Endpoints
@@ -83,21 +108,25 @@ Category endpoints, product deletion, and additional validation are still under 
 | GET | `/api/products/{id}` | Retrieve a product by ID | Implemented |
 | GET | `/api/products?slug={slug}` | Retrieve products matching a URL slug | Implemented |
 | POST | `/api/products` | Create a new product | Implemented |
-| DELETE | `/api/products/{id}` | Delete a product | Planned |
+| DELETE | `/api/products/{id}` | Delete a product | Implemented |
 
 ### Categories
 
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
-| GET | `/api/categories` | Retrieve categories and their products | Planned |
-| GET | `/api/categories/{id}` | Retrieve a category by ID | Planned |
-| GET | `/api/categories?slug={slug}` | Retrieve categories matching a URL slug | Planned |
-| POST | `/api/categories` | Create a new category | Planned |
-| DELETE | `/api/categories/{id}` | Delete a category | Planned |
+| GET | `/api/categories` | Retrieve categories and their products | Implemented |
+| GET | `/api/categories/{id}` | Retrieve a category by ID | Implemented |
+| GET | `/api/categories?slug={slug}` | Retrieve categories matching a URL slug | Implemented |
+| POST | `/api/categories` | Create a new category | Implemented |
+| DELETE | `/api/categories/{id}` | Delete a category | Implemented |
 
-### Example Product Request
+## API Examples
+
+### Creating a Product
 
 **POST `/api/products`**
+
+Request body:
 
 ```json
 {
@@ -110,9 +139,7 @@ Category endpoints, product deletion, and additional validation are still under 
 
 The API automatically generates the product's URL slug and assigns its database ID.
 
-### Example Product Response
-
-**201 Created**
+Example response — **201 Created**:
 
 ```json
 {
@@ -144,6 +171,75 @@ If no matching product exists, the endpoint returns:
 With the HTTP status code `200 OK`.
 
 If no slug is provided, the endpoint returns all products.
+
+### Creating a Category
+
+**POST `/api/categories`**
+
+Request body:
+
+```json
+{
+  "name": "T-Shirts",
+  "image": "/images/tshirts.png"
+}
+```
+
+The API automatically generates the category's URL slug and assigns its database ID.
+
+Example response — **201 Created**:
+
+```json
+{
+  "id": 1,
+  "name": "T-Shirts",
+  "image": "/images/tshirts.png",
+  "urlSlug": "t-shirts",
+  "products": []
+}
+```
+
+Newly created categories have an empty products collection.
+
+### Retrieving Categories
+
+**GET `/api/categories`**
+
+Returns a list of categories containing their basic information and a nested products collection.
+
+**GET `/api/categories/{id}`**
+
+Returns a specific category by its ID, including its associated products.
+
+If the category does not exist, the endpoint returns `404 Not Found`.
+
+### Filtering Categories by Slug
+
+Categories can be filtered using an optional query parameter:
+
+```http
+GET /api/categories?slug=t-shirts
+```
+
+This returns an array containing matching categories.
+
+If no category matches the supplied slug, the endpoint returns `200 OK` with an empty array.
+
+### Deleting Resources
+
+Products and categories can be deleted using their respective DELETE endpoints.
+
+```http
+DELETE /api/products/1
+```
+
+```http
+DELETE /api/categories/1
+```
+
+A successful deletion returns `204 No Content`.
+
+If the requested resource does not exist, the API returns `404 Not Found`.
 
 ## Getting Started
 
@@ -223,6 +319,14 @@ GET /api/products/1
 GET /api/products?slug=black-cotton-t-shirt
 ```
 
+```http
+GET /api/categories
+```
+
+```http
+GET /api/categories?slug=t-shirts
+```
+
 ## Project Structure
 
 ```text
@@ -232,7 +336,9 @@ FreakyFashion/
 │   │   └── AppDbContext.cs
 │   ├── DTOs/
 │   │   ├── CreateProductDto.cs
-│   │   └── ProductResponseDto.cs
+│   │   ├── ProductResponseDto.cs
+│   │   ├── CreateCategoryDto.cs
+│   │   └── CategoryResponseDto.cs
 │   ├── Models/
 │   │   ├── Product.cs
 │   │   └── Category.cs
@@ -267,16 +373,32 @@ Database migrations are used to create and update the database schema.
 
 DTOs separate the API's request and response structures from the database entities.
 
-Currently implemented DTOs include:
+The project uses four DTOs:
 
 - `CreateProductDto` — Defines the data required when creating a product.
 - `ProductResponseDto` — Defines the product data returned to API clients.
+- `CreateCategoryDto` — Defines the data required when creating a category.
+- `CategoryResponseDto` — Defines category data returned to API clients, including a products collection.
 
 This separation allows the database models and API contracts to evolve independently.
 
+Helper methods convert database entities into response DTOs to avoid exposing database models directly.
+
+### Product and Category Relationships
+
+The `Category` model contains a collection of related products.
+
+Entity Framework Core manages the relationship between categories and products.
+
+Category GET endpoints return product information using nested `ProductResponseDto` objects.
+
+The category GET-by-ID endpoint uses `Include()` to load related products before converting the category into its response DTO.
+
+The relationship mapping has been implemented, but additional testing with associated products remains.
+
 ### URL Slug Generation
 
-Product URL slugs are generated automatically from product names.
+Product and category URL slugs are generated automatically from their names.
 
 For example:
 
@@ -296,27 +418,46 @@ More advanced slug normalization and uniqueness handling may be added later.
 
 ### Database Queries
 
-Product endpoints use asynchronous Entity Framework Core queries.
+The endpoints use asynchronous Entity Framework Core queries.
 
 LINQ methods such as `Where()`, `Select()`, `FirstOrDefaultAsync()`, and `ToListAsync()` are used to filter, retrieve, and transform data.
 
-Product responses are mapped to DTOs rather than returning database entities directly.
+The category GET-by-ID endpoint also uses `Include()` to load related products.
+
+### Input Validation
+
+POST endpoints validate incoming data before creating database entities.
+
+Product creation rejects:
+
+- Empty or whitespace-only names
+- Empty or whitespace-only descriptions
+- Empty or whitespace-only image paths
+- Prices less than or equal to zero
+
+Category creation rejects:
+
+- Empty or whitespace-only names
+- Empty or whitespace-only image paths
+
+Invalid requests return `400 Bad Request`.
 
 ## API Testing
 
 Manual API testing is performed using **Bruno**.
 
-The following scenarios have been tested successfully:
+The following scenarios have been tested during development:
 
-- Creating a product and receiving `201 Created`
-- Retrieving products from the database
-- Retrieving a product by ID
-- Receiving `404 Not Found` for a nonexistent product ID
-- Filtering products by URL slug
-- Retrieving all products when no slug is provided
+- Creating products and categories
+- Retrieving products and categories
+- Retrieving resources by ID
+- Filtering products and categories by URL slug
 - Receiving an empty array when a slug has no matches
+- Deleting resources successfully
+- Receiving `404 Not Found` for nonexistent resources
+- Receiving `204 No Content` after successful category deletion
 
-Further testing will be performed as additional endpoints are implemented.
+Additional testing is planned to verify populated category-product relationships and complete the final requirements review.
 
 ## Learning Objectives
 
