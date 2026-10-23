@@ -8,6 +8,7 @@
         public required decimal Price { get; set; }
         public required string Image {  get; set; }
         public required string UrlSlug { get; set; }
+        public int? CategoryId { get; set; }
 
     }
 }

@@ -88,13 +88,19 @@ app.MapPost("/api/products", async (AppDbContext db, CreateProductDto dto) =>
     {
         return Results.BadRequest();
     }
+
+    if (!await db.Categories.AnyAsync(c => c.Id == dto.CategoryId))
+    {
+        return Results.BadRequest();
+    }
     var product = new Product
     {
         Name = dto.Name,
         Description = dto.Description,
         Price = dto.Price,
         Image = dto.Image,
-        UrlSlug = dto.Name.Trim().ToLowerInvariant().Replace(" ", "-")
+        UrlSlug = dto.Name.Trim().ToLowerInvariant().Replace(" ", "-"),
+        CategoryId = dto.CategoryId
     };
 
 
@@ -183,6 +189,10 @@ app.MapDelete("/api/categories/{id}", async (int id, AppDbContext db) =>
     if (category == null)
     {
         return Results.NotFound();
+    }
+    if (await db.Products.AnyAsync(p => p.CategoryId == id))
+    {
+        return Results.Conflict("Cannot delete a category that contains prducts.");
     }
     db.Categories.Remove(category);
     await db.SaveChangesAsync();
