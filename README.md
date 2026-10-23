@@ -102,8 +102,6 @@ The remaining steps are final submission checks and preparation for the oral pre
 - [x] Code review of endpoints, models, DbContext, and DTOs
 - [x] Database migration verification
 - [x] README documentation update
-- [ ] Final submission checks
-- [ ] Oral presentation
 
 ## API Endpoints
 
