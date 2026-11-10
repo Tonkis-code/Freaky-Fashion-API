@@ -84,15 +84,43 @@ app.MapDelete("/api/products/{id}", async (int id, AppDbContext db) =>
 // here we validate the input and return 400 if the input is invalid
 app.MapPost("/api/products", async (AppDbContext db, CreateProductDto dto) =>
 {
-    if (string.IsNullOrWhiteSpace(dto.Name) || dto.Price <= 0 || string.IsNullOrWhiteSpace(dto.Description) || string.IsNullOrWhiteSpace(dto.Image))
+    var errors = new Dictionary<string, string[]>();
+
+    if (string.IsNullOrWhiteSpace(dto.Name))
     {
-        return Results.BadRequest();
+        errors["Name"] = ["Name is required."];
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Description))
+    {
+        errors["Description"] = ["Description is required."];
+    }
+
+    if (dto.Price <= 0)
+    {
+        errors["Price"] = ["Price must be greater than zero."];
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Image))
+    {
+        errors["Image"] = ["Image is required."];
+    }
+
+    if (errors.Count > 0)
+    {
+        return Results.ValidationProblem(errors);
     }
 
     if (!await db.Categories.AnyAsync(c => c.Id == dto.CategoryId))
     {
-        return Results.BadRequest();
+        return Results.ValidationProblem(
+            new Dictionary<string, string[]>
+            {
+                ["CategoryId"] = ["The specified category does not exist."]
+            }
+        );
     }
+
     var product = new Product
     {
         Name = dto.Name,
@@ -103,12 +131,12 @@ app.MapPost("/api/products", async (AppDbContext db, CreateProductDto dto) =>
         CategoryId = dto.CategoryId
     };
 
-
     db.Products.Add(product);
     await db.SaveChangesAsync();
-    var response = ToResponseDto(product);
-    return Results.Created($"/api/products/{product.Id}", response);
 
+    var response = ToResponseDto(product);
+
+    return Results.Created($"/api/products/{product.Id}", response);
 });
 
 // Categories Endpoints
@@ -149,9 +177,21 @@ app.MapGet("/api/categories", async (AppDbContext db, string? slug) =>
 // where we use ToCategoryResponseDto to convert the category to a CategoryResponseDto to not expose the database model directly to the client
 app.MapPost("/api/categories", async (AppDbContext db, CreateCategoryDto dto) =>
 {
-    if (string.IsNullOrWhiteSpace(dto.Name) || string.IsNullOrWhiteSpace(dto.Image))
+    var errors = new Dictionary<string, string[]>();
+
+    if (string.IsNullOrWhiteSpace(dto.Name))
     {
-        return Results.BadRequest();
+        errors["Name"] = ["Name is required."];
+    }
+
+    if (string.IsNullOrWhiteSpace(dto.Image))
+    {
+        errors["Image"] = ["Image is required."];
+    }
+
+    if (errors.Count > 0)
+    {
+        return Results.ValidationProblem(errors);
     }
 
     var category = new Category
@@ -163,7 +203,9 @@ app.MapPost("/api/categories", async (AppDbContext db, CreateCategoryDto dto) =>
 
     db.Categories.Add(category);
     await db.SaveChangesAsync();
+
     var response = ToCategoryResponseDto(category);
+
     return Results.Created($"/api/categories/{category.Id}", response);
 });
 
@@ -192,7 +234,7 @@ app.MapDelete("/api/categories/{id}", async (int id, AppDbContext db) =>
     }
     if (await db.Products.AnyAsync(p => p.CategoryId == id))
     {
-        return Results.Conflict("Cannot delete a category that contains prducts.");
+        return Results.Conflict("Cannot delete a category that contains products.");
     }
     db.Categories.Remove(category);
     await db.SaveChangesAsync();
